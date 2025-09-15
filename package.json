@@ -1,0 +1,109 @@
+{
+  "name": "merge-helper",
+  "displayName": "Merge Helper",
+  "description": "Fusiona duplicados y aplica últimas versiones de bloques/funciones",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Formatters",
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "merge-helper.merge-javascript",
+        "title": "Merge JavaScript",
+        "category": "Merge Helper"
+      },
+      {
+        "command": "merge-helper.merge-css",
+        "title": "Merge CSS",
+        "category": "Merge Helper"
+      },
+      {
+        "command": "merge-helper.merge-html",
+        "title": "Merge HTML",
+        "category": "Merge Helper"
+      },
+      {
+        "command": "merge-helper.merge-java",
+        "title": "Merge Java",
+        "category": "Merge Helper"
+      },
+      {
+        "command": "merge-helper.merge-python",
+        "title": "Merge Python",
+        "category": "Merge Helper"
+      },
+      {
+        "command": "merge-helper.merge-php",
+        "title": "Merge PHP",
+        "category": "Merge Helper"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "merge-helper.merge-javascript",
+          "group": "0_mergehelper",
+          "when": "editorLangId == javascript || editorLangId == typescript || editorLangId == typescriptreact || editorLangId == javascriptreact"
+        },
+        {
+          "command": "merge-helper.merge-css",
+          "group": "0_mergehelper",
+          "when": "editorLangId == css"
+        },
+        {
+          "command": "merge-helper.merge-html",
+          "group": "0_mergehelper",
+          "when": "editorLangId == html"
+        },
+        {
+          "command": "merge-helper.merge-java",
+          "group": "0_mergehelper",
+          "when": "editorLangId == java"
+        },
+        {
+          "command": "merge-helper.merge-python",
+          "group": "0_mergehelper",
+          "when": "editorLangId == python"
+        },
+        {
+          "command": "merge-helper.merge-php",
+          "group": "0_mergehelper",
+          "when": "editorLangId == php"
+        }
+      ]
+    }
+  },
+  "activationEvents": [
+    "onCommand:merge-helper.merge-javascript",
+    "onCommand:merge-helper.merge-css",
+    "onCommand:merge-helper.merge-html",
+    "onCommand:merge-helper.merge-java",
+    "onCommand:merge-helper.merge-python",
+    "onCommand:merge-helper.merge-php"
+  ],
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.104.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "eslint": "^9.34.0",
+    "typescript": "^5.9.2",
+    "@vscode.test-cli": "^0.0.11",
+    "@vscode.test-electron": "^2.5.2"
+  }
+}
