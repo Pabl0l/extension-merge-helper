@@ -18,8 +18,6 @@ export async function mergeDuplicates(
             if (block.ranges.length <= 1) {continue;}
 
             try {
-                const mergedContent = parser.mergeBlocks(editor, block.ranges);
-
                 // Verificar que los rangos no se superpongan
                 let hasOverlap = false;
                 const rangesToCheck = [...block.ranges].sort((a, b) => a.start.line - b.start.line);
@@ -36,21 +34,54 @@ export async function mergeDuplicates(
                     continue;
                 }
 
-                // Para CSS, eliminar todos los bloques y agregar el fusionado al final
-                for (const range of block.ranges) {
-                    editBuilder.delete(range);
+                // Para JavaScript, eliminar todos menos el último
+                // Expandir los rangos para incluir líneas vacías adyacentes
+                for (let i = 0; i < block.ranges.length - 1; i++) {
+                    const range = block.ranges[i];
+                    
+                    // Expandir el rango para incluir líneas vacías antes y después
+                    const expandedRange = expandRangeToIncludeEmptyLines(editor.document, range);
+                    editBuilder.delete(expandedRange);
                 }
-                
-                // Insertar el contenido fusionado después del último bloque
-                const lastRange = block.ranges[block.ranges.length - 1];
-                editBuilder.insert(lastRange.end, '\n' + mergedContent);
 
                 mergedCount++;
             } catch (error) {
-                console.error(`Error fusionando bloque ${block.name}:`, error);
+                console.error(`Error procesando bloque ${block.name}:`, error);
             }
         }
     });
 
     return { merged: mergedCount };
+}
+
+// Función auxiliar para expandir rangos e incluir líneas vacías
+function expandRangeToIncludeEmptyLines(document: vscode.TextDocument, range: vscode.Range): vscode.Range {
+    let startLine = range.start.line;
+    let endLine = range.end.line;
+    
+    // Buscar líneas vacías antes del bloque
+    while (startLine > 0) {
+        const lineText = document.lineAt(startLine - 1).text;
+        if (lineText.trim() === '') {
+            startLine--;
+        } else {
+            break;
+        }
+    }
+    
+    // Buscar líneas vacías después del bloque
+    const totalLines = document.lineCount;
+    while (endLine < totalLines - 1) {
+        const lineText = document.lineAt(endLine + 1).text;
+        if (lineText.trim() === '') {
+            endLine++;
+        } else {
+            break;
+        }
+    }
+    
+    return new vscode.Range(
+        new vscode.Position(startLine, 0),
+        new vscode.Position(endLine + 1, 0)
+    );
 }

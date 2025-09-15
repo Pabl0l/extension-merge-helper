@@ -121,37 +121,21 @@ export function findMatchingBrace(text: string, startIndex: number, openBrace: s
 
 
 export function findBlockEnd(text: string, startIndex: number): number {
-
     if (startIndex < 0 || startIndex >= text.length) {
-
         return -1;
-
     }
-
     
-
     // Buscar la primera llave abierta después del inicio
-
     let braceIndex = startIndex;
-
     while (braceIndex < text.length) {
-
         if (text[braceIndex] === '{' && !isInsideCommentOrString(text, braceIndex)) {
-
             const endIndex = findMatchingBrace(text, braceIndex, '{', '}');
-
             return endIndex !== -1 ? endIndex + 1 : -1;
-
         }
-
         braceIndex++;
-
     }
-
     
-
     return -1;
-
 }
 
 

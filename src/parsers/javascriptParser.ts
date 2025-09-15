@@ -290,8 +290,16 @@ export const javascriptParser: LanguageParser = {
 
             // Object literals (mejorado)
 
-            /\b(const|let|var)\s+(\w+)\s*=\s*\{[^}]*\}/g
+            /\b(const|let|var)\s+(\w+)\s*=\s*\{[^}]*\}/g,
 
+        // const asyncFunctionPatterns = [
+            /\b(async\s+function\s+\w+\s*\([^)]*\)\s*\{)/g,
+
+            /\b(async\s+\w+\s*=\s*\([^)]*\)\s*=>\s*\{)/g,
+
+            /\b(async\s+\w+\s*\([^)]*\)\s*\{)/g,
+            
+            /\b(const|let|var)\s+(\w+)\s*=\s*\{[^}]*\}\s*;?/g
         ];
 
 
