@@ -24,23 +24,8 @@
         "category": "Merge Helper"
       },
       {
-        "command": "merge-helper.merge-html",
-        "title": "Merge HTML",
-        "category": "Merge Helper"
-      },
-      {
-        "command": "merge-helper.merge-java",
-        "title": "Merge Java",
-        "category": "Merge Helper"
-      },
-      {
         "command": "merge-helper.merge-python",
         "title": "Merge Python",
-        "category": "Merge Helper"
-      },
-      {
-        "command": "merge-helper.merge-php",
-        "title": "Merge PHP",
         "category": "Merge Helper"
       }
     ],
@@ -57,24 +42,9 @@
           "when": "editorLangId == css"
         },
         {
-          "command": "merge-helper.merge-html",
-          "group": "0_mergehelper",
-          "when": "editorLangId == html"
-        },
-        {
-          "command": "merge-helper.merge-java",
-          "group": "0_mergehelper",
-          "when": "editorLangId == java"
-        },
-        {
           "command": "merge-helper.merge-python",
           "group": "0_mergehelper",
           "when": "editorLangId == python"
-        },
-        {
-          "command": "merge-helper.merge-php",
-          "group": "0_mergehelper",
-          "when": "editorLangId == php"
         }
       ]
     }
@@ -82,10 +52,7 @@
   "activationEvents": [
     "onCommand:merge-helper.merge-javascript",
     "onCommand:merge-helper.merge-css",
-    "onCommand:merge-helper.merge-html",
-    "onCommand:merge-helper.merge-java",
-    "onCommand:merge-helper.merge-python",
-    "onCommand:merge-helper.merge-php"
+    "onCommand:merge-helper.merge-python"
   ],
   "scripts": {
     "vscode:prepublish": "npm run compile",

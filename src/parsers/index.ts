@@ -1,5 +1,6 @@
 import { javascriptParser } from './javascriptParser';
 import { cssParser } from './cssParser';
+import { pythonParser } from './pythonParser';
 import { genericParser } from './genericParser';
 
 export function getParserForLanguage(languageId: string) {
@@ -11,10 +12,7 @@ export function getParserForLanguage(languageId: string) {
         'css': cssParser,
         'scss': cssParser,
         'less': cssParser,
-        'html': genericParser,
-        'java': genericParser,
-        'python': genericParser,
-        'php': genericParser,
+        'python': pythonParser,
     };
     return parsers[languageId] || genericParser;
 }

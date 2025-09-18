@@ -48,10 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
     const commands = [
         vscode.commands.registerCommand('merge-helper.merge-javascript', () => handleMerge('javascript')),
         vscode.commands.registerCommand('merge-helper.merge-css', () => handleMerge('css')),
-        vscode.commands.registerCommand('merge-helper.merge-html', () => handleMerge('html')),
-        vscode.commands.registerCommand('merge-helper.merge-java', () => handleMerge('java')),
-        vscode.commands.registerCommand('merge-helper.merge-python', () => handleMerge('python')),
-        vscode.commands.registerCommand('merge-helper.merge-php', () => handleMerge('php'))
+        vscode.commands.registerCommand('merge-helper.merge-python', () => handleMerge('python'))
     ];
 
     // Agregar todos los comandos al contexto

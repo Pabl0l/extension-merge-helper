@@ -1,71 +1,81 @@
-# merge-helper README
+# Merge Helper
 
-This is the README for your extension "merge-helper". After writing up a brief description, we recommend including the following sections.
+Merge Helper is a Visual Studio Code extension designed to refactor your code by eliminating duplicate blocks and keeping the most recent version.
+
+## How it works
+
+This extension analyzes the active file for duplicate code blocks (such as functions, classes, or CSS selectors with the same name). When it finds duplicates, it removes all previous occurrences and keeps only the latest version of the block in the position of the first occurrence.
+
+This is especially useful in code merge scenarios, where it is common to have conflicts or duplicates of functions that have been modified in different branches.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Smart merging:** Keeps the latest version of a code block and removes the others.
+- **Multi-language support:** Works with:
+  - JavaScript
+  - TypeScript
+  - CSS
+  - Python
+- **Easy to use:** Activated with a single click from the editor's context menu.
 
-For example if there is an image subfolder under your extension project workspace:
+## Usage
 
-\!\[feature X\]\(images/feature-x.png\)
+1.  Open a file of one of the supported languages (`.js`, `.ts`, `.css`, `.py`).
+2.  Right-click anywhere in the editor to open the context menu.
+3.  Select the "Merge" option corresponding to the language of your file:
+    - `Merge JavaScript`
+    - `Merge CSS`
+    - `Merge Python`
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+The extension will analyze the file, perform the merge, and notify you of the result.
 
-## Requirements
+## Commands
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+| Command                 | Title           | Description                               |
+| ----------------------- | ---------------- | ----------------------------------------- |
+| `merge-helper.merge-javascript` | Merge JavaScript | Merges duplicate blocks in JS/TS files. |
+| `merge-helper.merge-css`      | Merge CSS        | Merges duplicate rules in CSS files.    |
+| `merge-helper.merge-python`   | Merge Python     | Merges duplicate blocks in Python files.|
 
-## Extension Settings
+## Contributions
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+Suggestions and contributions are always welcome. If you find a problem or have an idea to improve the extension, please open an issue in the GitHub repository.
 
-For example:
+## Estructura
 
-This extension contributes the following settings:
+```
+.vscode/
+├───extensions.json
+├───launch.json
+├───settings.json
+└───tasks.json
+src/
+├───extension.ts
+├───merge.ts
+├───parsers/
+│   ├───cssParser.ts
+│   ├───genericParser.ts
+│   ├───index.ts
+│   ├───javascriptParser.ts
+│   ├───pythonParser.ts
+│   └───types.ts
+└───utils/
+    ├───cssTextUtils.ts
+    ├───detectBlocks.ts
+    ├───pythonBlockUtils.ts
+    ├───rangeUtils.ts
+    └───textUtils.ts
+test/
+├───test.css
+├───test.js
+└───test.py
+.gitignore
+.vscodeignore
+CHANGELOG.md
+eslint.config.mjs
+package-lock.json
+package.json
+README.md
+tsconfig.json
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+```
