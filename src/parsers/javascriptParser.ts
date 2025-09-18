@@ -1,479 +1,141 @@
 import * as vscode from 'vscode';
-
 import { positionFromIndex, isInsideCommentOrString, findBlockEnd } from '../utils/textUtils';
-
 import { DuplicateBlock, LanguageParser } from './types';
 
-
-
-// ================== MERGE HELPERS ==================
-
-
-
-// Merge de funciones: une líneas únicas dentro del cuerpo
-
-function mergeFunctions(editor: vscode.TextEditor, ranges: vscode.Range[]): string {
-
-    const seen = new Set<string>();
-
-    const mergedLines: string[] = [];
-
-    let header = "";
-
-
-
-    for (const range of ranges) {
-
-        const blockText = editor.document.getText(range).trim();
-
-        console.log(`Procesando función: ${blockText}`);
-
-        
-
-        // Extraer el header (todo antes de la primera llave)
-
-        const headerMatch = blockText.match(/^[^{]+\{/);
-
-        if (headerMatch) {
-
-            header = headerMatch[0];
-
-        }
-
-
-
-        // Extraer el cuerpo (contenido entre llaves)
-
-        const bodyMatch = blockText.match(/\{([\s\S]*)\}$/);
-
-        if (bodyMatch) {
-
-            const bodyContent = bodyMatch[1].trim();
-
-            console.log(`Cuerpo de la función: ${bodyContent}`);
-
-            
-
-            // Dividir en líneas y procesar
-
-            const lines = bodyContent.split('\n');
-
-            for (const line of lines) {
-
-                const normalized = line.trim();
-
-                if (normalized && !seen.has(normalized) && !normalized.includes('}')) {
-
-                    seen.add(normalized);
-
-                    mergedLines.push("    " + normalized);
-
-                }
-
-            }
-
-        }
-
-    }
-
-
-
-    // Construir la función merged
-
-    const mergedBody = mergedLines.join("\n");
-
-    return `${header}\n${mergedBody}\n}`;
-
-}
-
-
-
-// Merge de clases: une métodos únicos dentro de la clase
-
-function mergeClasses(editor: vscode.TextEditor, ranges: vscode.Range[]): string {
-
-    const methods = new Map<string, string>();
-
-    let header = "";
-
-
-
-    for (const range of ranges) {
-
-        const blockText = editor.document.getText(range).trim();
-
-        console.log(`Procesando clase: ${blockText}`);
-
-        
-
-        const headerMatch = blockText.match(/^[^{]+\{/);
-
-        if (headerMatch) {
-
-            header = headerMatch[0];
-
-        }
-
-
-
-        const bodyMatch = blockText.match(/\{([\s\S]*)\}$/);
-
-        if (bodyMatch) {
-
-            const bodyContent = bodyMatch[1].trim();
-
-            
-
-            // Detectar métodos de forma más robusta
-
-            const methodRegex = /(\w+)\s*\([^)]*\)\s*\{([^{}]*)\}/g;
-
-            let match;
-
-            
-
-            while ((match = methodRegex.exec(bodyContent)) !== null) {
-
-                const methodName = match[1];
-
-                const methodBody = match[2].trim();
-
-                
-
-                if (!methods.has(methodName)) {
-
-                    methods.set(methodName, `    ${methodName}() {\n        ${methodBody}\n    }`);
-
-                }
-
-            }
-
-        }
-
-    }
-
-
-
-    const mergedMethods = [...methods.values()].join("\n\n");
-
-    return `${header}\n${mergedMethods}\n}`;
-
-}
-
-
-
-// Merge de objetos: une propiedades únicas dentro del objeto literal
-
-function mergeObjects(editor: vscode.TextEditor, ranges: vscode.Range[]): string {
-
-    const props = new Map<string, string>();
-
-    let header = "";
-
-
-
-    for (const range of ranges) {
-
-        const blockText = editor.document.getText(range).trim();
-
-        console.log(`Procesando objeto: ${blockText}`);
-
-        
-
-        const headerMatch = blockText.match(/^[^{]+\{/);
-
-        if (headerMatch) {
-
-            header = headerMatch[0];
-
-        }
-
-
-
-        const bodyMatch = blockText.match(/\{([\s\S]*)\}$/);
-
-        if (bodyMatch) {
-
-            const bodyContent = bodyMatch[1].trim();
-
-            const lines = bodyContent.split('\n');
-
-            
-
-            for (const line of lines) {
-
-                const trimmed = line.trim().replace(/,$/, "").replace(/;$/, "");
-
-                if (trimmed && !trimmed.includes('}')) {
-
-                    const colonIndex = trimmed.indexOf(':');
-
-                    if (colonIndex > -1) {
-
-                        const key = trimmed.substring(0, colonIndex).trim();
-
-                        const value = trimmed.substring(colonIndex + 1).trim();
-
-                        if (key && value && !props.has(key)) {
-
-                            props.set(key, `    ${key}: ${value},`);
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }
-
-    }
-
-
-
-    const mergedProps = [...props.values()].join("\n");
-
-    return `${header}\n${mergedProps}\n};`;
-
-}
-
-
-
-// ================== PARSER ==================
-
-// ================== PARSER SIMPLIFICADO ==================
-
+/**
+ * Parser para encontrar y fusionar duplicados en código JavaScript y TypeScript.
+ */
 export const javascriptParser: LanguageParser = {
 
+    /**
+     * Encuentra bloques de código duplicados (funciones, clases, etc.) en un texto.
+     * @param text El texto completo del documento.
+     * @param editor El editor de texto activo.
+     * @returns Un array de bloques duplicados encontrados.
+     */
     findDuplicates: (text: string, editor: vscode.TextEditor): DuplicateBlock[] => {
-
         const duplicates: DuplicateBlock[] = [];
-
         const blocks = new Map<string, { ranges: vscode.Range[], contents: string[] }>();
 
-
-
-        // Patrones mejorados para capturar declaraciones completas
-
-        // Patrones mejorados para capturar declaraciones completas
-
+        // Expresiones regulares para identificar declaraciones de funciones, clases, interfaces, etc.
         const namePatterns = [
-
-            // Funciones regulares
-
+            // Funciones regulares: function miFuncion() { ... }
             /\b(function)\s+(\w+)\s*\([^)]*\)\s*(?::\s*\w+)?\s*\{/g,
-
-            // Funciones flecha
-
+            // Funciones flecha: const miFuncion = () => { ... }
             /\b(const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[^=]*)\s*=>\s*\{/g,
-
-            // Funciones con asignación
-
+            // Funciones con asignación: miFuncion = function() { ... }
             /\b(\w+)\s*=\s*(?:async\s*)?function\s*\([^)]*\)\s*(?::\s*\w+)?\s*\{/g,
-
-            // Clases
-
+            // Clases: class MiClase { ... }
             /\b(class)\s+(\w+)(?:\s+extends\s+\w+)?\s*\{/g,
-
-            // Interfaces
-
+            // Interfaces: interface MiInterfaz { ... }
             /\b(interface)\s+(\w+)\s*\{/g,
-
-            // Enums
-
+            // Enums: enum MiEnum { ... }
             /\b(enum)\s+(\w+)\s*\{/g,
-
-            // Types
-
+            // Types: type MiType = { ... }
             /\b(type)\s+(\w+)\s*=\s*\{/g,
-
-            // Object literals (mejorado)
-
+            // Literales de objeto: const miObjeto = { ... }
             /\b(const|let|var)\s+(\w+)\s*=\s*\{[^}]*\}/g,
-
-        // const asyncFunctionPatterns = [
+            // Funciones asíncronas
             /\b(async\s+function\s+\w+\s*\([^)]*\)\s*\{)/g,
-
             /\b(async\s+\w+\s*=\s*\([^)]*\)\s*=>\s*\{)/g,
-
             /\b(async\s+\w+\s*\([^)]*\)\s*\{)/g,
-            
             /\b(const|let|var)\s+(\w+)\s*=\s*\{[^}]*\}\s*;?/g
         ];
 
-
-
         const declarations: Array<{ name: string, start: number, end: number }> = [];
 
-
-
+        // Itera sobre cada patrón para encontrar todas las declaraciones en el texto.
         for (const pattern of namePatterns) {
-
             let match;
-
+            // Bucle para encontrar todas las coincidencias de un patrón.
             while ((match = pattern.exec(text)) !== null) {
-
                 const matchIndex = match.index;
 
+                // Si la coincidencia está dentro de un comentario o una cadena, se ignora.
                 if (isInsideCommentOrString(text, matchIndex)) {continue;}
 
-
-
                 let name = '';
-
+                // Extrae el nombre de la declaración basado en el tipo de patrón.
                 if (match[1] === 'function' || match[1] === 'class' || 
-
                     match[1] === 'interface' || match[1] === 'type' || match[1] === 'enum') {
-
                     name = match[2];
-
                 } else if (match[1] === 'const' || match[1] === 'let' || match[1] === 'var') {
-
                     name = match[2];
-
                 } else {
-
                     name = match[1];
-
                 }
-
-
-
-
 
                 if (name) {
-
+                    // Encuentra el final del bloque de código (la llave de cierre `}`).
                     const blockEnd = findBlockEnd(text, matchIndex);
-
                     if (blockEnd !== -1) {
-
-                        // Verificar que el bloque contenga tanto la declaración como el cuerpo
-
                         const blockContent = text.substring(matchIndex, blockEnd);
-
+                        // Asegura que el bloque sea válido (contiene `{` y `}`).
                         if (blockContent.includes('{') && blockContent.includes('}')) {
-
                             declarations.push({
-
                                 name,
-
                                 start: matchIndex,
-
                                 end: blockEnd
-
                             });
-
                         }
-
                     }
-
                 }
-
             }
-
         }
 
-
-
-        // Ordenar declaraciones por posición de inicio
-
+        // Ordena las declaraciones por su posición de inicio para manejar superposiciones.
         declarations.sort((a, b) => a.start - b.start);
 
-
-
-        // Filtrar declaraciones que se overlapean
-
+        // Filtra las declaraciones superpuestas para quedarse con la más externa.
         const nonOverlappingDeclarations: typeof declarations = [];
-
         let lastEnd = -1;
-
-
-
         for (const decl of declarations) {
-
             if (decl.start > lastEnd) {
-
                 nonOverlappingDeclarations.push(decl);
-
                 lastEnd = decl.end;
-
             }
-
         }
 
-
-
+        // Agrupa las declaraciones por nombre para encontrar duplicados.
         for (const decl of nonOverlappingDeclarations) {
-
             const blockContent = text.substring(decl.start, decl.end).trim();
-
             const range = new vscode.Range(
-
                 positionFromIndex(text, decl.start),
-
                 positionFromIndex(text, decl.end)
-
             );
 
-
-
             if (!blocks.has(decl.name)) {
-
                 blocks.set(decl.name, { ranges: [], contents: [] });
-
             }
-
-
 
             const blockInfo = blocks.get(decl.name)!;
-
             blockInfo.ranges.push(range);
-
             blockInfo.contents.push(blockContent);
-
         }
 
-
-
-        // Solo considerar duplicados si hay múltiples versiones
-
+        // Itera sobre los bloques agrupados y si un bloque tiene más de una ocurrencia, se considera un duplicado.
         for (const [name, blockInfo] of blocks.entries()) {
-
             if (blockInfo.ranges.length > 1) {
-
                 duplicates.push({
-
                     name,
-
                     ranges: blockInfo.ranges,
-
                     type: 'block',
-
                     language: 'javascript'
-
                 });
-
             }
-
         }
-
-
 
         return duplicates;
-
     },
 
-
-
-    // Función mergeBlocks simplificada - ya no necesitamos lógica compleja
-
+    /**
+     * Fusiona un conjunto de rangos de bloques duplicados, conservando el contenido del último bloque.
+     * @param editor El editor de texto activo.
+     * @param ranges Los rangos de los bloques duplicados a fusionar.
+     * @returns El contenido del último bloque, que se usará para reemplazar a los demás.
+     */
     mergeBlocks: (editor: vscode.TextEditor, ranges: vscode.Range[]): string => {
-
-        // Simplemente devolver el contenido del último rango (versión más reciente)
-
+        // Devuelve el contenido del último rango, que representa la versión más reciente del bloque.
         return editor.document.getText(ranges[ranges.length - 1]);
-
     }
-
 };

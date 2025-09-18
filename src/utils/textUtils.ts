@@ -1,58 +1,40 @@
 import * as vscode from 'vscode';
 
-
-
+/**
+ * Convierte un índice de un string en un objeto `Position` de VS Code (línea y carácter).
+ * @param text El texto completo del documento.
+ * @param index El índice basado en caracteres dentro del texto.
+ * @returns Un objeto `Position` que corresponde al índice.
+ */
 export function positionFromIndex(text: string, index: number): vscode.Position {
-
     if (index < 0 || index > text.length) {
-
-        // Si el índice está fuera de rango, devolver posición segura
-
         console.warn(`Índice fuera de rango: ${index}, text length: ${text.length}`);
-
         return new vscode.Position(0, 0);
-
     }
-
     
-
     const textBeforeIndex = text.substring(0, index);
-
     const lines = textBeforeIndex.split('\n');
-
     
-
-    // Asegurarnos de que tenemos al menos una línea
-
     if (lines.length === 0) {
-
         return new vscode.Position(0, 0);
-
     }
-
     
-
     const lineNumber = lines.length - 1;
-
     const characterPosition = lines[lines.length - 1].length;
-
     
-
-    // Validar que los valores sean válidos
-
     if (lineNumber < 0) {
-
         return new vscode.Position(0, Math.max(0, characterPosition));
-
     }
-
     
-
     return new vscode.Position(lineNumber, characterPosition);
-
 }
 
-
+/**
+ * Verifica si un índice dado en un texto se encuentra dentro de un comentario (de línea o de bloque).
+ * @param text El texto completo del documento.
+ * @param index El índice a verificar.
+ * @returns `true` si el índice está dentro de un comentario, `false` en caso contrario.
+ */
 export function isInsideCommentOrString(text: string, index: number): boolean {
     if (index >= text.length) {
         return false;
@@ -60,26 +42,31 @@ export function isInsideCommentOrString(text: string, index: number): boolean {
     
     const precedingText = text.substring(0, index);
     
-    // Verificar comentarios de línea
+    // Bucle para verificar comentarios de línea (//)
     const lineStart = precedingText.lastIndexOf('\n') + 1;
     const lineContent = precedingText.substring(lineStart);
     if (lineContent.includes('//')) {
         return true;
     }
     
-    // Verificar comentarios de bloque /* */
+    // Bucle para verificar comentarios de bloque (/* */)
     const lastBlockCommentStart = precedingText.lastIndexOf('/*');
     const lastBlockCommentEnd = precedingText.lastIndexOf('*/');
     if (lastBlockCommentStart > lastBlockCommentEnd) {
         return true;
     }
     
-    // Para CSS, no necesitamos verificar strings de la misma manera que en JS
-    // CSS no tiene strings delimitados por comillas de la misma forma
     return false;
 }
 
-
+/**
+ * Encuentra la llave de cierre correspondiente a una de apertura en un texto.
+ * @param text El texto completo del documento.
+ * @param startIndex El índice donde empezar la búsqueda.
+ * @param openBrace El carácter de la llave de apertura (ej. '{').
+ * @param closeBrace El carácter de la llave de cierre (ej. '}').
+ * @returns El índice de la llave de cierre correspondiente, o -1 si no se encuentra.
+ */
 export function findMatchingBrace(text: string, startIndex: number, openBrace: string, closeBrace: string): number {
     if (startIndex < 0 || startIndex >= text.length) {
         return -1;
@@ -88,7 +75,7 @@ export function findMatchingBrace(text: string, startIndex: number, openBrace: s
     let braceCount = 0;
     let i = startIndex;
     
-    // Encontrar la primera llave abierta
+    // Bucle para encontrar la primera llave de apertura.
     while (i < text.length) {
         if (text[i] === openBrace && !isInsideCommentOrString(text, i)) {
             braceCount = 1;
@@ -102,7 +89,7 @@ export function findMatchingBrace(text: string, startIndex: number, openBrace: s
         return -1;
     }
     
-    // Buscar la llave de cierre correspondiente
+    // Bucle para buscar la llave de cierre correspondiente, manteniendo un contador de llaves anidadas.
     while (i < text.length) {
         if (text[i] === openBrace && !isInsideCommentOrString(text, i)) {
             braceCount++;
@@ -118,14 +105,18 @@ export function findMatchingBrace(text: string, startIndex: number, openBrace: s
     return -1;
 }
 
-
-
+/**
+ * Encuentra el final de un bloque de código (delimitado por llaves) a partir de un índice de inicio.
+ * @param text El texto completo del documento.
+ * @param startIndex El índice donde empezar a buscar la primera llave de apertura.
+ * @returns El índice del final del bloque, o -1 si no se encuentra.
+ */
 export function findBlockEnd(text: string, startIndex: number): number {
     if (startIndex < 0 || startIndex >= text.length) {
         return -1;
     }
     
-    // Buscar la primera llave abierta después del inicio
+    // Bucle para buscar la primera llave de apertura después del índice de inicio.
     let braceIndex = startIndex;
     while (braceIndex < text.length) {
         if (text[braceIndex] === '{' && !isInsideCommentOrString(text, braceIndex)) {
@@ -136,24 +127,4 @@ export function findBlockEnd(text: string, startIndex: number): number {
     }
     
     return -1;
-}
-
-
-
-export function getIndentationLevel(line: string): number {
-
-    const match = line.match(/^[\s\t]*/);
-
-    return match ? match[0].length : 0;
-
-}
-
-
-
-// Función para verificar si dos rangos se superponen
-
-export function rangesOverlap(range1: vscode.Range, range2: vscode.Range): boolean {
-
-    return range1.intersection(range2) !== undefined;
-
 }
