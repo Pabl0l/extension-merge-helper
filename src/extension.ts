@@ -8,66 +8,66 @@ import { mergeDuplicates } from './merge';
  * @param context El contexto de la extensión, proporcionado por VS Code.
  */
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Merge Helper activado!');
+    console.log('Merge Helper activated!');
 
     /**
-     * Maneja el proceso de fusión de duplicados para un lenguaje específico.
-     * @param languageId El identificador del lenguaje de programación (ej. 'javascript', 'css').
+     * Handles the process of merging duplicates for a specific language.
+     * @param languageId The identifier of the programming language (e.g., 'javascript', 'css').
      */
     const handleMerge = async (languageId: string) => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
-            vscode.window.showWarningMessage('No hay editor activo');
+            vscode.window.showWarningMessage('No active editor');
             return;
         }
 
         const document = editor.document;
         const text = document.getText();
 
-        console.log(`=== INICIANDO ANÁLISIS PARA: ${languageId} ===`);
-        console.log(`Archivo: ${document.fileName}`);
-        console.log(`Total de líneas: ${document.lineCount}`);
+        console.log(`=== STARTING ANALYSIS FOR: ${languageId} ===`);
+        console.log(`File: ${document.fileName}`);
+        console.log(`Total lines: ${document.lineCount}`);
 
         try {
-            // Obtiene el parser adecuado para el lenguaje actual.
+            // Gets the appropriate parser for the current language.
             const parser = getParserForLanguage(languageId);
-            // Encuentra todos los bloques duplicados en el texto.
+            // Finds all duplicate blocks in the text.
             const duplicates = parser.findDuplicates(text, editor);
 
-            console.log('=== RESULTADOS DEL ANÁLISIS ===');
-            console.log(`Duplicados encontrados: ${duplicates.length}`);
+            console.log('=== ANALYSIS RESULTS ===');
+            console.log(`Duplicates found: ${duplicates.length}`);
 
             if (duplicates.length === 0) {
-                vscode.window.showInformationMessage('No se encontraron duplicados');
+                vscode.window.showInformationMessage('No duplicates found');
                 return;
             }
 
-            // Realiza la fusión de los duplicados encontrados.
+            // Performs the merge of the found duplicates.
             const result = await mergeDuplicates(editor, duplicates, parser);
 
             vscode.window.showInformationMessage(
-                `Merge completado. ${result.merged} bloques fusionados.`
+                `Merge completed. ${result.merged} blocks merged.`
             );
 
         } catch (error) {
-            console.error('ERROR DETALLADO:', error);
+            console.error('DETAILED ERROR:', error);
             vscode.window.showErrorMessage(`Error: ${error}`);
         }
     };
 
-    // Define los comandos que la extensión registrará.
+    // Defines the commands that the extension will register.
     const commands = [
         vscode.commands.registerCommand('merge-helper.merge-javascript', () => handleMerge('javascript')),
         vscode.commands.registerCommand('merge-helper.merge-css', () => handleMerge('css')),
         vscode.commands.registerCommand('merge-helper.merge-python', () => handleMerge('python'))
     ];
 
-    // Itera sobre los comandos y los agrega al contexto de la extensión para que estén disponibles.
+    // Iterates over the commands and adds them to the extension's context so they are available.
     commands.forEach(command => context.subscriptions.push(command));
 }
 
 /**
- * Desactiva la extensión.
- * Esta función se llama cuando la extensión es desactivada.
+ * Deactivates the extension.
+ * This function is called when the extension is deactivated.
  */
 export function deactivate() {}

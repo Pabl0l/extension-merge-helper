@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import { DuplicateBlock, LanguageParser } from './parsers/types';
 
 /**
- * Realiza la fusión de bloques de código duplicados en el editor.
- * @param editor El editor de texto activo de VS Code.
- * @param duplicates Un array de bloques duplicados encontrados por el parser.
- * @param parser El parser del lenguaje utilizado para encontrar los duplicados.
- * @returns Una promesa que se resuelve con el número de bloques fusionados.
+ * Performs the merge of duplicate code blocks in the editor.
+ * @param editor The active VS Code text editor.
+ * @param duplicates An array of duplicate blocks found by the parser.
+ * @param parser The language parser used to find the duplicates.
+ * @returns A promise that resolves with the number of merged blocks.
  */
 export async function mergeDuplicates(
     editor: vscode.TextEditor, 
@@ -15,32 +15,32 @@ export async function mergeDuplicates(
 ): Promise<{ merged: number }> {
     let mergedCount = 0;
 
-    // Ordena los duplicados por su posición en el documento de mayor a menor.
-    // Esto es crucial para evitar que las ediciones afecten las posiciones de los bloques restantes.
+    // Sorts the duplicates by their position in the document from highest to lowest.
+    // This is crucial to prevent edits from affecting the positions of the remaining blocks.
     const sortedDuplicates = [...duplicates].sort((a, b) => 
         b.ranges[0].start.line - a.ranges[0].start.line
     );
 
     await editor.edit(editBuilder => {
-        // Itera sobre cada grupo de bloques duplicados.
+        // Iterates over each group of duplicate blocks.
         for (const block of sortedDuplicates) {
             if (block.ranges.length <= 1) { continue; }
 
             try {
-                // Ordena los rangos de un bloque duplicado por su línea de inicio.
+                // Sorts the ranges of a duplicate block by their start line.
                 const sortedRanges = [...block.ranges].sort((a, b) => a.start.line - b.start.line);
                 const firstRange = sortedRanges[0];
                 const lastRange = sortedRanges[sortedRanges.length - 1];
                 const lastContent = editor.document.getText(lastRange);
 
-                // Elimina todos los bloques duplicados excepto el primero, empezando desde el último.
-                // Esto asegura que las posiciones de los rangos no se invaliden durante la eliminación.
+                // Deletes all duplicate blocks except the first one, starting from the last one.
+                // This ensures that the range positions are not invalidated during deletion.
                 for (let i = sortedRanges.length - 1; i >= 1; i--) {
                     const range = sortedRanges[i];
                     let rangeToDelete = range;
 
-                    // Si el bloque no está inmediatamente después del anterior, expande el rango
-                    // para incluir líneas vacías y mantener el formato del código.
+                    // If the block is not immediately after the previous one, expand the range
+                    // to include empty lines and maintain the code formatting.
                     if (range.start.line > firstRange.end.line + 1) {
                         rangeToDelete = expandRangeToIncludeEmptyLines(editor.document, range);
                     }
@@ -48,12 +48,12 @@ export async function mergeDuplicates(
                     editBuilder.delete(rangeToDelete);
                 }
 
-                // Reemplaza el primer bloque con el contenido del último, que es la versión más reciente.
+                // Replaces the first block with the content of the last one, which is the most recent version.
                 editBuilder.replace(firstRange, lastContent);
 
                 mergedCount++;
             } catch (error) {
-                console.error(`Error fusionando bloque ${block.name}:`, error);
+                console.error(`Error merging block ${block.name}:`, error);
             }
         }
     });
@@ -62,16 +62,16 @@ export async function mergeDuplicates(
 }
 
 /**
- * Expande un rango para incluir las líneas vacías adyacentes antes y después.
- * @param document El documento de texto activo.
- * @param range El rango a expandir.
- * @returns Un nuevo rango que incluye las líneas vacías circundantes.
+ * Expands a range to include adjacent empty lines before and after.
+ * @param document The active text document.
+ * @param range The range to expand.
+ * @returns A new range that includes the surrounding empty lines.
  */
 function expandRangeToIncludeEmptyLines(document: vscode.TextDocument, range: vscode.Range): vscode.Range {
     let startLine = range.start.line;
     let endLine = range.end.line;
 
-    // Bucle para buscar líneas vacías antes del bloque y expandir el rango hacia arriba.
+    // Loop to search for empty lines before the block and expand the range upwards.
     while (startLine > 0) {
         const lineText = document.lineAt(startLine - 1).text;
         if (lineText.trim() === '') {
@@ -81,7 +81,7 @@ function expandRangeToIncludeEmptyLines(document: vscode.TextDocument, range: vs
         }
     }
 
-    // Bucle para buscar líneas vacías después del bloque y expandir el rango hacia abajo.
+    // Loop to search for empty lines after the block and expand the range downwards.
     while (endLine < document.lineCount - 1) {
         const lineText = document.lineAt(endLine + 1).text;
         if (lineText.trim() === '') {

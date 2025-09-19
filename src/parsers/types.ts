@@ -1,36 +1,36 @@
 import * as vscode from 'vscode';
 
 /**
- * Representa un grupo de bloques de código que se han identificado como duplicados.
+ * Represents a group of code blocks that have been identified as duplicates.
  */
 export interface DuplicateBlock {
-    /** El nombre del bloque duplicado (ej. nombre de función, selector CSS). */
+    /** The name of the duplicate block (e.g., function name, CSS selector). */
     name: string;
-    /** Un array de rangos de VS Code, cada uno correspondiendo a una ocurrencia del bloque duplicado. */
+    /** An array of VS Code ranges, each corresponding to an occurrence of the duplicate block. */
     ranges: vscode.Range[];
-    /** El tipo de bloque (ej. 'function', 'class', 'css'). */
+    /** The type of block (e.g., 'function', 'class', 'css'). */
     type: string;
-    /** El lenguaje de programación del bloque. */
+    /** The programming language of the block. */
     language: string;
 }
 
 /**
- * Define la estructura que debe seguir un parser de lenguaje para ser compatible con la extensión.
+ * Defines the structure that a language parser must follow to be compatible with the extension.
  */
 export interface LanguageParser {
     /**
-     * Busca y devuelve todos los bloques duplicados en un documento de texto.
-     * @param text El contenido completo del documento.
-     * @param editor El editor de texto activo.
-     * @returns Un array de `DuplicateBlock` encontrados.
+     * Finds and returns all duplicate blocks in a text document.
+     * @param text The full content of the document.
+     * @param editor The active text editor.
+     * @returns An array of `DuplicateBlock` found.
      */
     findDuplicates: (text: string, editor: vscode.TextEditor) => DuplicateBlock[];
 
     /**
-     * Define la lógica para fusionar un grupo de bloques duplicados.
-     * @param editor El editor de texto activo.
-     * @param ranges Los rangos de las ocurrencias del bloque duplicado.
-     * @returns El string con el contenido del bloque ya fusionado.
+     * Defines the logic for merging a group of duplicate blocks.
+     * @param editor The active text editor.
+     * @param ranges The ranges of the occurrences of the duplicate block.
+     * @returns The string with the content of the already merged block.
      */
     mergeBlocks: (editor: vscode.TextEditor, ranges: vscode.Range[]) => string;
 }

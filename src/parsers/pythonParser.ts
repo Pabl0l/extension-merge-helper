@@ -2,14 +2,14 @@ import * as vscode from 'vscode';
 import { DuplicateBlock, LanguageParser } from './types';
 
 /**
- * Parser para encontrar y fusionar duplicados en código Python.
+ * Parser to find and merge duplicates in Python code.
  */
 export const pythonParser: LanguageParser = {
     /**
-     * Encuentra bloques de código duplicados (funciones y clases) en un texto de Python.
-     * @param text El texto completo del documento.
-     * @param editor El editor de texto activo.
-     * @returns Un array de bloques duplicados encontrados.
+     * Finds duplicate code blocks (functions and classes) in a Python text.
+     * @param text The full text of the document.
+     * @param editor The active text editor.
+     * @returns An array of found duplicate blocks.
      */
     findDuplicates: (text: string, editor: vscode.TextEditor): DuplicateBlock[] => {
         const duplicates: DuplicateBlock[] = [];
@@ -17,18 +17,18 @@ export const pythonParser: LanguageParser = {
         const lines = text.split('\n');
 
         /**
-         * Calcula la indentación de una línea.
-         * @param line La línea de texto.
-         * @returns El número de espacios de indentación.
+         * Calculates the indentation of a line.
+         * @param line The text line.
+         * @returns The number of indentation spaces.
          */
         const getIndentation = (line: string): number => {
             return line.match(/^\s*/)?.[0].length || 0;
         };
 
         /**
-         * Comprueba si una línea es un comentario o una cadena vacía.
-         * @param line La línea de texto.
-         * @returns `true` si la línea es ignorable.
+         * Checks if a line is a comment or an empty string.
+         * @param line The text line.
+         * @returns `true` if the line is ignorable.
          */
         const isIgnorableLine = (line: string): boolean => {
             const trimmed = line.trim();
@@ -36,24 +36,24 @@ export const pythonParser: LanguageParser = {
         };
 
         /**
-         * Comprueba si una línea es un decorador.
-         * @param line La línea de texto.
-         * @returns `true` si la línea es un decorador.
+         * Checks if a line is a decorator.
+         * @param line The text line.
+         * @returns `true` if the line is a decorator.
          */
         const isDecorator = (line: string): boolean => {
             return line.trim().startsWith('@');
         };
 
         /**
-         * Obtiene el rango completo de un bloque de código (función o clase) a partir de su línea de inicio.
-         * @param startLine El número de la línea donde comienza el bloque.
-         * @returns El rango de VS Code que abarca todo el bloque.
+         * Gets the full range of a code block (function or class) from its start line.
+         * @param startLine The line number where the block begins.
+         * @returns The VS Code range that covers the entire block.
          */
         const getBlockRange = (startLine: number): vscode.Range => {
             const baseIndentation = getIndentation(lines[startLine]);
             let endLine = startLine;
 
-            // Itera sobre las líneas siguientes para encontrar el final del bloque basándose en la indentación.
+            // Iterates over the following lines to find the end of the block based on indentation.
             for (let i = startLine + 1; i < lines.length; i++) {
                 const currentLine = lines[i];
                 const currentIndentation = getIndentation(currentLine);
@@ -63,7 +63,7 @@ export const pythonParser: LanguageParser = {
                     continue;
                 }
 
-                // Un bloque termina cuando una línea tiene una indentación menor o igual a la base.
+                // A block ends when a line has an indentation less than or equal to the base.
                 if (currentIndentation <= baseIndentation && !isDecorator(currentLine)) {
                     break;
                 }
@@ -78,7 +78,7 @@ export const pythonParser: LanguageParser = {
 
         const processedLines = new Set<number>();
 
-        // Itera sobre cada línea del documento para encontrar inicios de bloques.
+        // Iterates over each line of the document to find the beginnings of blocks.
         for (let lineNum = 0; lineNum < lines.length; lineNum++) {
             if (processedLines.has(lineNum)) {continue;}
 
@@ -87,7 +87,7 @@ export const pythonParser: LanguageParser = {
 
             if (isIgnorableLine(line)) {continue;}
 
-            // Salta las líneas de decoradores para encontrar la definición de la función o clase.
+            // Skips decorator lines to find the function or class definition.
             let decoratorLines: number[] = [];
             while (isDecorator(trimmedLine) && lineNum + 1 < lines.length) {
                 decoratorLines.push(lineNum);
@@ -96,13 +96,13 @@ export const pythonParser: LanguageParser = {
                 trimmedLine = line.trim();
             }
 
-            // Busca definiciones de clases.
+            // Searches for class definitions.
             const classMatch = trimmedLine.match(/^class\s+([A-Za-z_]\w*)\s*(?:[^)]*)?\s*:/);
             if (classMatch) {
                 const className = classMatch[1];
                 const range = getBlockRange(lineNum);
 
-                // Marca las líneas del bloque como procesadas para evitar analizarlas de nuevo.
+                // Marks the block lines as processed to avoid analyzing them again.
                 for (let i = range.start.line; i <= range.end.line; i++) {
                     processedLines.add(i);
                 }
@@ -115,7 +115,7 @@ export const pythonParser: LanguageParser = {
                 continue;
             }
 
-            // Busca definiciones de funciones (incluyendo asíncronas).
+            // Searches for function definitions (including async).
             const functionMatch = trimmedLine.match(/^(?:async\s+)?def\s+([A-Za-z_]\w*)\s*\(.*\)\s*:/);
             if (functionMatch) {
                 const functionName = functionMatch[1];
@@ -134,7 +134,7 @@ export const pythonParser: LanguageParser = {
             }
         }
 
-        // Filtra los bloques para encontrar duplicados y elimina los rangos superpuestos.
+        // Filters the blocks to find duplicates and removes overlapping ranges.
         for (const [name, ranges] of blocks.entries()) {
             if (ranges.length > 1) {
                 const sorted = ranges.sort((a, b) => a.start.line - b.start.line);
@@ -163,13 +163,13 @@ export const pythonParser: LanguageParser = {
     },
 
     /**
-     * Fusiona un conjunto de rangos de bloques duplicados, conservando el contenido del último bloque.
-     * @param editor El editor de texto activo.
-     * @param ranges Los rangos de los bloques duplicados a fusionar.
-     * @returns El contenido del último bloque, que se usará para reemplazar a los demás.
+     * Merges a set of duplicate block ranges, keeping the content of the last block.
+     * @param editor The active text editor.
+     * @param ranges The ranges of the duplicate blocks to merge.
+     * @returns The content of the last block, which will be used to replace the others.
      */
     mergeBlocks: (editor: vscode.TextEditor, ranges: vscode.Range[]): string => {
-        // Devuelve el contenido del último rango, que representa la versión más reciente del bloque.
+        // Returns the content of the last range, which represents the most recent version of the block.
         return editor.document.getText(ranges[ranges.length - 1]);
     }
 };

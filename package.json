@@ -1,8 +1,14 @@
 {
   "name": "merge-helper",
   "displayName": "Merge Helper",
-  "description": "Fusiona duplicados y aplica últimas versiones de bloques/funciones",
+  "description": "Merges duplicates and applies the latest versions of blocks/functions",
   "version": "0.0.1",
+  "publisher": "JuanPabloOliveraMendoza",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pabl0l/extension-merge-helper"
+  },
+  "license": "MIT",
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -10,22 +16,32 @@
     "Formatters",
     "Other"
   ],
+  "keywords": [
+    "merge",
+    "replace",
+    "duplicate",
+    "refactor",
+    "javascript",
+    "python",
+    "css"
+  ],
+  "icon": "icon.png",
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "merge-helper.merge-javascript",
-        "title": "Merge JavaScript",
+        "title": "🥄 Merge JavaScript",
         "category": "Merge Helper"
       },
       {
         "command": "merge-helper.merge-css",
-        "title": "Merge CSS",
+        "title": "🥄 Merge CSS",
         "category": "Merge Helper"
       },
       {
         "command": "merge-helper.merge-python",
-        "title": "Merge Python",
+        "title": "🥄 Merge Python",
         "category": "Merge Helper"
       }
     ],
@@ -55,22 +71,25 @@
     "onCommand:merge-helper.merge-python"
   ],
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run package",
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "package": "node esbuild.js --production",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/vscode": "^1.104.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
+    "@types/vscode": "^1.104.0",
     "@typescript-eslint/eslint-plugin": "^8.42.0",
     "@typescript-eslint/parser": "^8.42.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.25.10",
     "eslint": "^9.34.0",
-    "typescript": "^5.9.2",
-    "@vscode.test-cli": "^0.0.11",
-    "@vscode.test-electron": "^2.5.2"
+    "typescript": "^5.9.2"
   }
 }

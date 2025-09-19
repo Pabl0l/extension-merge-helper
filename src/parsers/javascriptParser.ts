@@ -3,39 +3,39 @@ import { positionFromIndex, isInsideCommentOrString, findBlockEnd } from '../uti
 import { DuplicateBlock, LanguageParser } from './types';
 
 /**
- * Parser para encontrar y fusionar duplicados en código JavaScript y TypeScript.
+ * Parser to find and merge duplicates in JavaScript and TypeScript code.
  */
 export const javascriptParser: LanguageParser = {
 
     /**
-     * Encuentra bloques de código duplicados (funciones, clases, etc.) en un texto.
-     * @param text El texto completo del documento.
-     * @param editor El editor de texto activo.
-     * @returns Un array de bloques duplicados encontrados.
+     * Finds duplicate code blocks (functions, classes, etc.) in a text.
+     * @param text The full text of the document.
+     * @param editor The active text editor.
+     * @returns An array of found duplicate blocks.
      */
     findDuplicates: (text: string, editor: vscode.TextEditor): DuplicateBlock[] => {
         const duplicates: DuplicateBlock[] = [];
         const blocks = new Map<string, { ranges: vscode.Range[], contents: string[] }>();
 
-        // Expresiones regulares para identificar declaraciones de funciones, clases, interfaces, etc.
+        // Regular expressions to identify declarations of functions, classes, interfaces, etc.
         const namePatterns = [
-            // Funciones regulares: function miFuncion() { ... }
+            // Regular functions: function myFunction() { ... }
             /\b(function)\s+(\w+)\s*\([^)]*\)\s*(?::\s*\w+)?\s*\{/g,
-            // Funciones flecha: const miFuncion = () => { ... }
+            // Arrow functions: const myFunction = () => { ... }
             /\b(const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[^=]*)\s*=>\s*\{/g,
-            // Funciones con asignación: miFuncion = function() { ... }
+            // Functions with assignment: myFunction = function() { ... }
             /\b(\w+)\s*=\s*(?:async\s*)?function\s*\([^)]*\)\s*(?::\s*\w+)?\s*\{/g,
-            // Clases: class MiClase { ... }
+            // Classes: class MyClass { ... }
             /\b(class)\s+(\w+)(?:\s+extends\s+\w+)?\s*\{/g,
-            // Interfaces: interface MiInterfaz { ... }
+            // Interfaces: interface MyInterface { ... }
             /\b(interface)\s+(\w+)\s*\{/g,
-            // Enums: enum MiEnum { ... }
+            // Enums: enum MyEnum { ... }
             /\b(enum)\s+(\w+)\s*\{/g,
-            // Types: type MiType = { ... }
+            // Types: type MyType = { ... }
             /\b(type)\s+(\w+)\s*=\s*\{/g,
-            // Literales de objeto: const miObjeto = { ... }
+            // Object literals: const myObject = { ... }
             /\b(const|let|var)\s+(\w+)\s*=\s*\{[^}]*\}/g,
-            // Funciones asíncronas
+            // Async functions
             /\b(async\s+function\s+\w+\s*\([^)]*\)\s*\{)/g,
             /\b(async\s+\w+\s*=\s*\([^)]*\)\s*=>\s*\{)/g,
             /\b(async\s+\w+\s*\([^)]*\)\s*\{)/g,
@@ -44,18 +44,18 @@ export const javascriptParser: LanguageParser = {
 
         const declarations: Array<{ name: string, start: number, end: number }> = [];
 
-        // Itera sobre cada patrón para encontrar todas las declaraciones en el texto.
+        // Iterates over each pattern to find all declarations in the text.
         for (const pattern of namePatterns) {
             let match;
-            // Bucle para encontrar todas las coincidencias de un patrón.
+            // Loop to find all matches of a pattern.
             while ((match = pattern.exec(text)) !== null) {
                 const matchIndex = match.index;
 
-                // Si la coincidencia está dentro de un comentario o una cadena, se ignora.
+                // If the match is inside a comment or a string, it is ignored.
                 if (isInsideCommentOrString(text, matchIndex)) {continue;}
 
                 let name = '';
-                // Extrae el nombre de la declaración basado en el tipo de patrón.
+                // Extracts the name of the declaration based on the pattern type.
                 if (match[1] === 'function' || match[1] === 'class' || 
                     match[1] === 'interface' || match[1] === 'type' || match[1] === 'enum') {
                     name = match[2];
@@ -66,11 +66,11 @@ export const javascriptParser: LanguageParser = {
                 }
 
                 if (name) {
-                    // Encuentra el final del bloque de código (la llave de cierre `}`).
+                    // Finds the end of the code block (the closing brace `}`).
                     const blockEnd = findBlockEnd(text, matchIndex);
                     if (blockEnd !== -1) {
                         const blockContent = text.substring(matchIndex, blockEnd);
-                        // Asegura que el bloque sea válido (contiene `{` y `}`).
+                        // Ensures that the block is valid (contains '{' and '}').
                         if (blockContent.includes('{') && blockContent.includes('}')) {
                             declarations.push({
                                 name,
@@ -83,10 +83,10 @@ export const javascriptParser: LanguageParser = {
             }
         }
 
-        // Ordena las declaraciones por su posición de inicio para manejar superposiciones.
+        // Sorts the declarations by their start position to handle overlaps.
         declarations.sort((a, b) => a.start - b.start);
 
-        // Filtra las declaraciones superpuestas para quedarse con la más externa.
+        // Filters overlapping declarations to keep the outermost one.
         const nonOverlappingDeclarations: typeof declarations = [];
         let lastEnd = -1;
         for (const decl of declarations) {
@@ -96,7 +96,7 @@ export const javascriptParser: LanguageParser = {
             }
         }
 
-        // Agrupa las declaraciones por nombre para encontrar duplicados.
+        // Groups the declarations by name to find duplicates.
         for (const decl of nonOverlappingDeclarations) {
             const blockContent = text.substring(decl.start, decl.end).trim();
             const range = new vscode.Range(
@@ -113,7 +113,7 @@ export const javascriptParser: LanguageParser = {
             blockInfo.contents.push(blockContent);
         }
 
-        // Itera sobre los bloques agrupados y si un bloque tiene más de una ocurrencia, se considera un duplicado.
+        // Iterates over the grouped blocks and if a block has more than one occurrence, it is considered a duplicate.
         for (const [name, blockInfo] of blocks.entries()) {
             if (blockInfo.ranges.length > 1) {
                 duplicates.push({
@@ -129,13 +129,13 @@ export const javascriptParser: LanguageParser = {
     },
 
     /**
-     * Fusiona un conjunto de rangos de bloques duplicados, conservando el contenido del último bloque.
-     * @param editor El editor de texto activo.
-     * @param ranges Los rangos de los bloques duplicados a fusionar.
-     * @returns El contenido del último bloque, que se usará para reemplazar a los demás.
+     * Merges a set of duplicate block ranges, keeping the content of the last block.
+     * @param editor The active text editor.
+     * @param ranges The ranges of the duplicate blocks to merge.
+     * @returns The content of the last block, which will be used to replace the others.
      */
     mergeBlocks: (editor: vscode.TextEditor, ranges: vscode.Range[]): string => {
-        // Devuelve el contenido del último rango, que representa la versión más reciente del bloque.
+        // Returns the content of the last range, which represents the most recent version of the block.
         return editor.document.getText(ranges[ranges.length - 1]);
     }
 };

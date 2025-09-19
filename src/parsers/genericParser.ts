@@ -2,22 +2,22 @@ import * as vscode from 'vscode';
 import { DuplicateBlock, LanguageParser } from './types';
 
 /**
- * Un parser genérico que se utiliza cuando no hay un parser específico para el lenguaje actual.
- * No realiza ninguna acción de búsqueda de duplicados.
+ * A generic parser that is used when there is no specific parser for the current language.
+ * It does not perform any duplicate search action.
  */
 export const genericParser: LanguageParser = {
     /**
-     * Devuelve un array vacío, ya que este parser no detecta duplicados.
-     * @returns Un array vacío.
+     * Returns an empty array, as this parser does not detect duplicates.
+     * @returns An empty array.
      */
     findDuplicates: (): DuplicateBlock[] => [],
 
     /**
-     * Devuelve el contenido del último rango proporcionado. Aunque no se utiliza activamente
-     * con `findDuplicates` vacío, implementa la interfaz requerida.
-     * @param editor El editor de texto activo.
-     * @param ranges Un array de rangos.
-     * @returns El texto del último rango.
+     * Returns the content of the last provided range. Although not actively used
+     * with an empty `findDuplicates`, it implements the required interface.
+     * @param editor The active text editor.
+     * @param ranges An array of ranges.
+     * @returns The text of the last range.
      */
     mergeBlocks: (editor: vscode.TextEditor, ranges: vscode.Range[]): string => {
         return editor.document.getText(ranges[ranges.length - 1]);

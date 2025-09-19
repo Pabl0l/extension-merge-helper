@@ -4,10 +4,10 @@ import { pythonParser } from './pythonParser';
 import { genericParser } from './genericParser';
 
 /**
- * Obtiene el parser adecuado para un lenguaje de programación específico.
- * @param languageId El identificador del lenguaje (ej. 'javascript', 'css', 'python').
- * @returns El objeto parser correspondiente al lenguaje. Si no se encuentra un parser específico,
- * devuelve un parser genérico que no realiza ninguna acción.
+ * Gets the appropriate parser for a specific programming language.
+ * @param languageId The identifier of the language (e.g., 'javascript', 'css', 'python').
+ * @returns The parser object corresponding to the language. If no specific parser is found,
+ * it returns a generic parser that performs no action.
  */
 export function getParserForLanguage(languageId: string) {
     const parsers: any = {
@@ -20,6 +20,6 @@ export function getParserForLanguage(languageId: string) {
         'less': cssParser,
         'python': pythonParser,
     };
-    // Retorna el parser específico para el languageId o el parser genérico si no hay uno específico.
+    // Returns the specific parser for the languageId or the generic parser if there is no specific one.
     return parsers[languageId] || genericParser;
 }
